@@ -1,0 +1,31 @@
+---
+- name: Deploy Apache Web Server on EC2 (Real-Time)
+  hosts: webservers
+  become: yes
+
+  vars:
+    apache_pkg: "{{ 'httpd' if ansible_os_family == 'RedHat' else 'apache2' }}"
+
+  tasks:
+    - name: Install Apache
+      package:
+        name: "{{ apache_pkg }}"
+        state: present
+
+    - name: Ensure Apache is running
+      service:
+        name: "{{ apache_pkg }}"
+        state: started
+        enabled: true
+
+    - name: Deploy index.html from template
+      template:
+        src: index.html.j2
+        dest: /var/www/html/index.html
+      notify: Restart Apache
+
+  handlers:
+    - name: Restart Apache
+      service:
+        name: "{{ apache_pkg }}"
+        state: restarted
